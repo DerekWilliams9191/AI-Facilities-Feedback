@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WSU Facilities Feedback Reporter</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>WSU Facilities Feedback Reporter</h1>
+        <p>Report maintenance and cleaning issues quickly and efficiently</p>
+      </header>
+
+      <form id="feedbackForm" class="feedback-form">
+        <!-- Location Section -->
+        <div class="form-section">
+          <label for="location" class="required">Location</label>
+          <input
+            type="text"
+            id="location"
+            name="location"
+            required
+            placeholder="e.g., Smith Hall Room 205"
+          />
+          <div class="help-text">
+            Location should be automatically filled from QR code. Update if
+            needed.
+          </div>
+        </div>
+
+        <!-- Guidance Section -->
+        <div class="form-section guidance-section">
+          <h3>How to Write an Effective Report</h3>
+          <p>
+            <strong>Be specific and clear:</strong> Include details about what's
+            broken, when it happened, and how it affects the space.
+          </p>
+
+          <div class="guidance-details">
+            <h4>Best Practices:</h4>
+            <ul>
+              <li>Include specific room numbers and equipment identifiers</li>
+              <li>Describe the problem, not just symptoms</li>
+              <li>Mention safety concerns if applicable</li>
+              <li>Note if the issue affects accessibility</li>
+              <li>Include time-sensitive information</li>
+            </ul>
+
+            <h4>Examples:</h4>
+            <div class="examples">
+              <div class="example">
+                <strong>Good:</strong> "The main entrance door handle is
+                completely broken off. Students cannot open the door from
+                outside, creating a safety issue during emergency evacuations."
+              </div>
+              <div class="example">
+                <strong>Good:</strong> "Women's restroom on 2nd floor is
+                completely out of toilet paper in all 4 stalls."
+              </div>
+              <div class="example">
+                <strong>Poor:</strong> "Door doesn't work"
+                <em
+                  >- Doesn't describe what door or why the door doesn't work</em
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Problem Description -->
+        <div class="form-section">
+          <label for="description" class="required">Problem Description</label>
+          <textarea
+            id="description"
+            name="description"
+            required
+            placeholder="Describe the maintenance or cleaning issue in detail..."
+            rows="6"
+          ></textarea>
+          <div class="char-counter">
+            <span id="charCount">0</span> characters
+          </div>
+        </div>
+
+        <!-- Follow-up Email -->
+        <div class="form-section">
+          <label for="email">Follow-up Email (Optional)</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="butch.cougar@wsu.edu"
+          />
+          <div class="help-text">Receive updates on your report status</div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="form-section">
+          <button type="submit" id="submitBtn" class="submit-btn">
+            Submit Report
+          </button>
+          <div
+            class="loading-spinner"
+            id="loadingSpinner"
+            style="display: none"
+          >
+            Processing your report...
+          </div>
+        </div>
+      </form>
+
+      <!-- Success/Error Messages -->
+      <div id="messageArea" class="message-area" style="display: none"></div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
+
