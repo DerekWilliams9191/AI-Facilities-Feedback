@@ -4,13 +4,17 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
-    expose:
-      - "3000"
+    ports:
+      - "3000:3000"
     environment:
       - NODE_ENV=production
       - PORT=3000
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=gemma2:2b
     networks:
       - app-network
+    depends_on:
+      - ollama
     healthcheck:
       test:
         [
@@ -49,6 +53,26 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    networks:
+      - app-network
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  ollama_models:
 
 networks:
   app-network:

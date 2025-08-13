@@ -76,8 +76,10 @@ Category:`;
   async callOllamaAPI(prompt) {
     try {
       console.log('[Ollama API] Making request to Ollama...');
-      const response = await axios.post('http://localhost:11434/api/generate', {
-        model: 'gemma3:27b',
+      const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
+      const model = process.env.OLLAMA_MODEL || 'gemma2:2b';
+      const response = await axios.post(`${ollamaUrl}/api/generate`, {
+        model: model,
         prompt: prompt,
         stream: false
       });
