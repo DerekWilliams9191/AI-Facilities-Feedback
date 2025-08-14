@@ -5,7 +5,7 @@ ollama serve &
 
 # Wait for Ollama to be ready
 echo "Waiting for Ollama server to start..."
-while ! curl -s http://localhost:11434/api/version > /dev/null; do
+while ! wget -q --spider http://localhost:11434/api/version; do
   sleep 1
 done
 
