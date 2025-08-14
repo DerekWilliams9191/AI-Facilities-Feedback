@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const feedbackRoutes = require("./routes/feedback");
 const { errorHandler, requestLogger } = require("./middleware/validation");
+const database = require("./config/database");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,9 +26,12 @@ app.use("/api/feedback", feedbackRoutes);
 
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(
     `WSU Facilities Feedback Reporter API is running on port ${PORT}`,
   );
   console.log(`API Documentation available at: http://localhost:${PORT}`);
+  
+  // Test database connection
+  await database.testConnection();
 });

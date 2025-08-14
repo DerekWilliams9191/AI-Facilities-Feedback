@@ -1,10 +1,12 @@
+const database = require('../config/database');
+
 class TicketService {
   constructor() {
     this.tickets = [];
     this.ticketIdCounter = 1;
   }
 
-  createTicket(requestData) {
+  async createTicket(requestData) {
     try {
       const ticket = {
         id: this.generateTicketId(),
@@ -13,22 +15,39 @@ class TicketService {
         category: requestData.category,
         userEmail: requestData.userEmail,
         status: 'open',
-        priority: this.determinePriority(requestData.category),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        priority: this.determinePriority(requestData.category)
       };
 
-      this.tickets.push(ticket);
+      const query = `
+        INSERT INTO feedback (id, description, location, category, user_email, status, priority, manual_review, duplicate_of)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING *
+      `;
       
-      console.log(`[Ticket Service] Created new maintenance ticket: ${ticket.id}`);
-      console.log(`[Ticket Service] Location: ${ticket.location}`);
-      console.log(`[Ticket Service] Category: ${ticket.category}`);
-      console.log(`[Ticket Service] Priority: ${ticket.priority}`);
-      console.log(`[Ticket Service] Description: ${ticket.description}`);
+      const values = [
+        ticket.id,
+        ticket.description,
+        ticket.location,
+        ticket.category,
+        ticket.userEmail,
+        ticket.status,
+        ticket.priority,
+        false,
+        null
+      ];
+
+      const result = await database.query(query, values);
+      const savedTicket = result.rows[0];
+      
+      console.log(`[Ticket Service] Created new maintenance ticket: ${savedTicket.id}`);
+      console.log(`[Ticket Service] Location: ${savedTicket.location}`);
+      console.log(`[Ticket Service] Category: ${savedTicket.category}`);
+      console.log(`[Ticket Service] Priority: ${savedTicket.priority}`);
+      console.log(`[Ticket Service] Description: ${savedTicket.description}`);
       
       return {
         success: true,
-        ticket: ticket
+        ticket: savedTicket
       };
     } catch (error) {
       console.error('[Ticket Service] Error creating ticket:', error);
@@ -39,26 +58,46 @@ class TicketService {
     }
   }
 
-  flagForManualReview(requestData, reason) {
+  async flagForManualReview(requestData, reason) {
     try {
       const reviewItem = {
         id: this.generateReviewId(),
         description: requestData.description,
         location: requestData.location,
+        category: requestData.category,
         userEmail: requestData.userEmail,
-        reason: reason,
-        status: 'pending_review',
-        createdAt: new Date().toISOString()
+        status: 'pending_review'
       };
 
-      console.log(`[Ticket Service] Flagged for manual review: ${reviewItem.id}`);
+      const query = `
+        INSERT INTO feedback (id, description, location, category, user_email, status, priority, manual_review, duplicate_of)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING *
+      `;
+      
+      const values = [
+        reviewItem.id,
+        reviewItem.description,
+        reviewItem.location,
+        reviewItem.category,
+        reviewItem.userEmail,
+        reviewItem.status,
+        this.determinePriority(requestData.category),
+        true,
+        null
+      ];
+
+      const result = await database.query(query, values);
+      const savedReviewItem = result.rows[0];
+
+      console.log(`[Ticket Service] Flagged for manual review: ${savedReviewItem.id}`);
       console.log(`[Ticket Service] Reason: ${reason}`);
-      console.log(`[Ticket Service] Location: ${reviewItem.location}`);
-      console.log(`[Ticket Service] Description: ${reviewItem.description}`);
+      console.log(`[Ticket Service] Location: ${savedReviewItem.location}`);
+      console.log(`[Ticket Service] Description: ${savedReviewItem.description}`);
       
       return {
         success: true,
-        reviewItem: reviewItem
+        reviewItem: savedReviewItem
       };
     } catch (error) {
       console.error('[Ticket Service] Error flagging for review:', error);
@@ -69,25 +108,46 @@ class TicketService {
     }
   }
 
-  markAsDuplicate(requestData, duplicateTickets) {
+  async markAsDuplicate(requestData, duplicateTickets) {
     try {
+      const originalTicketId = duplicateTickets.length > 0 ? duplicateTickets[0].id : null;
       const duplicateRecord = {
         id: this.generateDuplicateId(),
         description: requestData.description,
         location: requestData.location,
+        category: requestData.category,
         userEmail: requestData.userEmail,
-        originalTicketIds: duplicateTickets.map(ticket => ticket.id),
-        status: 'duplicate',
-        createdAt: new Date().toISOString()
+        status: 'duplicate'
       };
 
-      console.log(`[Ticket Service] Marked as duplicate: ${duplicateRecord.id}`);
-      console.log(`[Ticket Service] Original tickets: ${duplicateRecord.originalTicketIds.join(', ')}`);
-      console.log(`[Ticket Service] Location: ${duplicateRecord.location}`);
+      const query = `
+        INSERT INTO feedback (id, description, location, category, user_email, status, priority, manual_review, duplicate_of)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING *
+      `;
+      
+      const values = [
+        duplicateRecord.id,
+        duplicateRecord.description,
+        duplicateRecord.location,
+        duplicateRecord.category,
+        duplicateRecord.userEmail,
+        duplicateRecord.status,
+        this.determinePriority(requestData.category),
+        false,
+        originalTicketId
+      ];
+
+      const result = await database.query(query, values);
+      const savedDuplicateRecord = result.rows[0];
+
+      console.log(`[Ticket Service] Marked as duplicate: ${savedDuplicateRecord.id}`);
+      console.log(`[Ticket Service] Original ticket: ${savedDuplicateRecord.duplicate_of}`);
+      console.log(`[Ticket Service] Location: ${savedDuplicateRecord.location}`);
       
       return {
         success: true,
-        duplicateRecord: duplicateRecord,
+        duplicateRecord: savedDuplicateRecord,
         originalTickets: duplicateTickets
       };
     } catch (error) {
@@ -99,27 +159,60 @@ class TicketService {
     }
   }
 
-  getTicketsByLocation(location) {
-    return this.tickets.filter(ticket => ticket.location === location);
+  async getTicketsByLocation(location) {
+    try {
+      const query = 'SELECT * FROM feedback WHERE location = $1 AND status != $2';
+      const result = await database.query(query, [location, 'closed']);
+      return result.rows;
+    } catch (error) {
+      console.error('[Ticket Service] Error getting tickets by location:', error);
+      return [];
+    }
   }
 
-  getAllTickets() {
-    return this.tickets;
+  async getAllTickets() {
+    try {
+      const query = 'SELECT * FROM feedback ORDER BY created_at DESC';
+      const result = await database.query(query);
+      return result.rows;
+    } catch (error) {
+      console.error('[Ticket Service] Error getting all tickets:', error);
+      return [];
+    }
   }
 
-  getTicketById(id) {
-    return this.tickets.find(ticket => ticket.id === id);
+  async getTicketById(id) {
+    try {
+      const query = 'SELECT * FROM feedback WHERE id = $1';
+      const result = await database.query(query, [id]);
+      return result.rows[0] || null;
+    } catch (error) {
+      console.error('[Ticket Service] Error getting ticket by ID:', error);
+      return null;
+    }
   }
 
-  updateTicketStatus(id, status) {
-    const ticket = this.getTicketById(id);
-    if (ticket) {
-      ticket.status = status;
-      ticket.updatedAt = new Date().toISOString();
+  async updateTicketStatus(id, status) {
+    try {
+      const query = `
+        UPDATE feedback 
+        SET status = $1, updated_at = CURRENT_TIMESTAMP 
+        WHERE id = $2 
+        RETURNING *
+      `;
+      const result = await database.query(query, [status, id]);
+      
+      if (result.rows.length === 0) {
+        return { success: false, error: 'Ticket not found' };
+      }
+      
+      const ticket = result.rows[0];
       console.log(`[Ticket Service] Updated ticket ${id} status to: ${status}`);
       return { success: true, ticket };
+    } catch (error) {
+      console.error('[Ticket Service] Error updating ticket status:', error);
+      return { success: false, error: error.message };
     }
-    return { success: false, error: 'Ticket not found' };
   }
 
   generateTicketId() {

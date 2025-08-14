@@ -53,7 +53,7 @@ async function processRequestAsync(requestId, requestData) {
         `[Background Processing] Classification failed for ${requestId}:`,
         classificationResult.error,
       );
-      const reviewResult = ticketService.flagForManualReview(
+      const reviewResult = await ticketService.flagForManualReview(
         requestData,
         "Classification service failed",
       );
@@ -64,7 +64,7 @@ async function processRequestAsync(requestId, requestData) {
     }
 
     if (classificationResult.needsManualReview) {
-      const reviewResult = ticketService.flagForManualReview(
+      const reviewResult = await ticketService.flagForManualReview(
         requestData,
         classificationResult.reason,
       );
@@ -74,7 +74,7 @@ async function processRequestAsync(requestId, requestData) {
       return;
     }
 
-    const existingTickets = ticketService.getTicketsByLocation(location);
+    const existingTickets = await ticketService.getTicketsByLocation(location);
     const duplicateCheck = await aiService.checkForDuplicates(
       description,
       location,
@@ -83,7 +83,7 @@ async function processRequestAsync(requestId, requestData) {
     );
 
     if (duplicateCheck.isDuplicate) {
-      const duplicateResult = ticketService.markAsDuplicate(
+      const duplicateResult = await ticketService.markAsDuplicate(
         requestData,
         duplicateCheck.duplicateTickets,
       );
@@ -93,7 +93,7 @@ async function processRequestAsync(requestId, requestData) {
       return;
     }
 
-    const ticketResult = ticketService.createTicket({
+    const ticketResult = await ticketService.createTicket({
       description,
       location,
       userEmail,
@@ -105,7 +105,7 @@ async function processRequestAsync(requestId, requestData) {
         `[Background Processing] Failed to create ticket for ${requestId}:`,
         ticketResult.error,
       );
-      const reviewResult = ticketService.flagForManualReview(
+      const reviewResult = await ticketService.flagForManualReview(
         requestData,
         "Ticket creation failed",
       );
@@ -123,7 +123,7 @@ async function processRequestAsync(requestId, requestData) {
       `[Background Processing] Error processing request ${requestId}:`,
       error,
     );
-    const reviewResult = ticketService.flagForManualReview(
+    const reviewResult = await ticketService.flagForManualReview(
       requestData,
       "Processing error: " + error.message,
     );
