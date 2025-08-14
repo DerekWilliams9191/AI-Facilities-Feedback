@@ -22,4 +22,4 @@ RUN chmod +x /app/create_superuser.sh
 EXPOSE 8000
 
 # Start script
-CMD ["sh", "-c", "python manage.py migrate && /app/create_superuser.sh && python manage.py runserver 0.0.0.0:8000"]
+CMD ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput && /app/create_superuser.sh && python manage.py runserver 0.0.0.0:8000"]
