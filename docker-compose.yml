@@ -9,7 +9,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_URL=http://ai-model:11434
       - OLLAMA_MODEL=gemma2:2b
       - DATABASE_URL=postgresql://postgres:postgres@database:5432/facilities_feedback
     networks:
@@ -90,6 +90,29 @@ services:
       - OLLAMA_MODEL=gemma2:2b
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:11434/api/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  admin-panel:
+    build:
+      context: ./admin-panel
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8082:8000"
+    environment:
+      - DATABASE_NAME=facilities_feedback
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=postgres
+      - DATABASE_HOST=database
+      - DATABASE_PORT=5432
+    networks:
+      - app-network
+    depends_on:
+      - database
+    healthcheck:
+      test: ["CMD", "python", "manage.py", "check", "--database", "default"]
       interval: 30s
       timeout: 10s
       retries: 3
