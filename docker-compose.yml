@@ -108,7 +108,7 @@ services:
       - DATABASE_HOST=database
       - DATABASE_PORT=5432
       - DEBUG=${DEBUG:-False}
-      - SECRET_KEY=${SECRET_KEY:-django-insecure-hs55$ug)3z7rr9sx%(xy5w+)u!6t+_+8uq34q$ve#)ib5t*r+v}
+      - SECRET_KEY=${SECRET_KEY:-django-insecure-hs55ug)3z7rr9sx%(xy5w+)u!6t+_+8uq34qve#)ib5t*r+v}
       - CLOUDFLARE_TUNNEL_DOMAIN=${CLOUDFLARE_TUNNEL_DOMAIN:-}
     networks:
       - app-network
