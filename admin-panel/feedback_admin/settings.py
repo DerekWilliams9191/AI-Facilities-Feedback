@@ -28,6 +28,22 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+# CSRF settings for Cloudflare tunnel
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.trycloudflare.com',
+    'https://*.cloudflareaccess.com',
+    'http://localhost:8082',
+    'http://127.0.0.1:8082',
+]
+
+# Add custom Cloudflare domain if provided
+cloudflare_domain = os.environ.get('CLOUDFLARE_TUNNEL_DOMAIN')
+if cloudflare_domain:
+    CSRF_TRUSTED_ORIGINS.append(f'https://{cloudflare_domain}')
+
+# Use X-Forwarded-Proto header from Cloudflare
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 
 # Application definition
 
